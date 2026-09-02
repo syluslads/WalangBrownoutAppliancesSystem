@@ -1,67 +1,186 @@
 .loginContainer {
   display: flex;
-  height: 100vh;
+  min-height: 100vh;
   width: 100vw;
-  background-color: #0f172a;
+  background-color: #0b1220;
 }
 
 .loginLeft {
-  width: 420px;
-  padding: 50px 40px;
-  background-color: #1e293b;
+  width: 460px;
+  padding: 48px 44px;
+  background-color: #111827;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  border-right: 1px solid #334155;
-  box-shadow: 10px 0 25px rgba(0, 0, 0, 0.3);
+  border-right: 1px solid #1f2937;
+  box-shadow: 10px 0 30px rgba(0, 0, 0, 0.35);
   z-index: 2;
+  flex-shrink: 0;
 }
 
 .brandHeader {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 30px;
+  margin-bottom: 36px;
 }
 
 .logoBoxLarge {
-  width: 48px;
-  height: 48px;
-  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  width: 46px;
+  height: 46px;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
   color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 800;
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.45);
 }
 
 .brandName {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 700;
   color: #f8fafc;
+  letter-spacing: -0.01em;
 }
 
 .title {
-  font-size: 28px;
-  font-weight: 700;
+  font-size: 26px;
+  font-weight: 800;
   color: #ffffff;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
+  letter-spacing: -0.01em;
 }
 
 .subtitle {
   font-size: 14px;
   color: #94a3b8;
-  margin-bottom: 32px;
+  margin-bottom: 28px;
+  line-height: 1.5;
+}
+
+/* ---------- Role selection ---------- */
+.roleList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.roleCard {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  text-align: left;
+  padding: 16px;
+  background-color: #161f31;
+  border: 1px solid #263244;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  color: inherit;
+}
+
+.roleCard:hover {
+  border-color: #3b82f6;
+  background-color: #1a2740;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.18);
+}
+
+.roleIcon {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.18), rgba(29, 78, 216, 0.18));
+  color: #60a5fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.roleText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.roleLabel {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #f1f5f9;
+}
+
+.roleDesc {
+  font-size: 12px;
+  color: #8b98ab;
+  line-height: 1.4;
+}
+
+.roleChevron {
+  color: #475569;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.backLink {
+  background: none;
+  border: none;
+  color: #60a5fa;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 18px;
+  align-self: flex-start;
+}
+
+.backLink:hover {
+  color: #93c5fd;
+}
+
+.selectedRolePill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  color: #93c5fd;
+  padding: 6px 12px;
+  border-radius: 30px;
+  font-size: 12.5px;
+  font-weight: 500;
+  margin-bottom: 18px;
+  width: fit-content;
+}
+
+.selectedRolePill .roleIcon {
+  width: 22px;
+  height: 22px;
+  background: none;
+}
+
+/* ---------- Form ---------- */
+.errorBanner {
+  background-color: rgba(239, 68, 68, 0.15);
+  border: 1px solid #ef4444;
+  color: #f87171;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 20px;
+  font-weight: 500;
 }
 
 .formGroup {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-bottom: 20px;
+  margin-bottom: 18px;
 }
 
 .formGroup label {
@@ -72,31 +191,107 @@
 
 .formGroup input {
   padding: 12px 16px;
-  border: 1px solid #334155;
-  background-color: #0f172a;
+  border: 1px solid #263244;
+  background-color: #0b1220;
   border-radius: 8px;
   color: #ffffff;
   font-size: 14px;
   outline: none;
   transition: all 0.2s ease;
+  width: 100%;
 }
 
 .formGroup input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.passwordWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.passwordWrap input {
+  padding-right: 42px;
+}
+
+.passwordToggle {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.passwordToggle:hover {
+  color: #cbd5e1;
+}
+
+.rememberRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 22px;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #94a3b8;
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkboxLabel input {
+  display: none;
+}
+
+.checkboxBox {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  border: 1px solid #334155;
+  background-color: #0b1220;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0b1220;
+}
+
+.checkboxLabel input:checked + .checkboxBox {
+  background-color: #2563eb;
   border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+  color: #ffffff;
+}
+
+.forgotLink {
+  font-size: 13px;
+  color: #60a5fa;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.forgotLink:hover {
+  text-decoration: underline;
 }
 
 .loginBtn {
   background: linear-gradient(135deg, #2563eb, #1d4ed8);
   color: #ffffff;
   border: none;
-  padding: 12px 24px;
+  padding: 13px 24px;
   border-radius: 8px;
   cursor: pointer;
   font-weight: 600;
   font-size: 15px;
   width: 100%;
-  margin-top: 10px;
   transition: transform 0.1s ease, box-shadow 0.2s ease;
   box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
 }
@@ -106,54 +301,83 @@
   box-shadow: 0 6px 20px rgba(37, 99, 235, 0.6);
 }
 
+/* ---------- Right hero panel ---------- */
 .loginRight {
   flex: 1;
-  background-color: #0f172a;
+  background-color: #0b1220;
   padding: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.imageFramePlaceholder {
-  width: 100%;
-  height: 100%;
-  max-width: 900px;
-  max-height: 700px;
-  border-radius: 16px;
-  border: 2px dashed #334155;
-  background-color: #1e293b;
   position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  box-shadow: inset 0 0 40px rgba(0,0,0,0.5);
 }
 
-.imageCrossOverlay {
-  position: absolute;
-  top: 0;
-  left: 0;
+.imageWrapper {
   width: 100%;
   height: 100%;
-  background: 
-    linear-gradient(to top right, transparent calc(50% - 1px), rgba(51, 65, 85, 0.6) calc(50% - 1px), rgba(51, 65, 85, 0.6) calc(50% + 1px), transparent calc(50% + 1px)),
-    linear-gradient(to bottom right, transparent calc(50% - 1px), rgba(51, 65, 85, 0.6) calc(50% - 1px), rgba(51, 65, 85, 0.6) calc(50% + 1px), transparent calc(50% + 1px));
+  max-width: 980px;
+  border-radius: 20px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
 }
 
-.imageLabel {
-  z-index: 2;
-  background-color: rgba(15, 23, 42, 0.85);
-  border: 1px solid #334155;
-  padding: 12px 24px;
+.loginHeroImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.imageOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(11, 18, 32, 0.15) 0%, rgba(11, 18, 32, 0.55) 65%, rgba(11, 18, 32, 0.92) 100%);
+}
+
+.heroCaption {
+  position: absolute;
+  left: 40px;
+  right: 40px;
+  bottom: 36px;
+  color: #f8fafc;
+}
+
+.heroTag {
+  display: inline-block;
+  background-color: rgba(59, 130, 246, 0.25);
+  border: 1px solid rgba(96, 165, 250, 0.5);
+  color: #bfdbfe;
+  padding: 5px 12px;
   border-radius: 30px;
-  color: #94a3b8;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+
+.heroCaption h3 {
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.35;
+  margin-bottom: 10px;
+  max-width: 620px;
+  letter-spacing: -0.01em;
+}
+
+.heroCaption p {
   font-size: 14px;
-  font-weight: 600;
-  backdrop-filter: blur(8px);
-  display: flex;
-  align-items: center;
-  gap: 10px;
+  color: #cbd5e1;
+  max-width: 560px;
+  line-height: 1.5;
+}
+
+@media (max-width: 900px) {
+  .loginRight {
+    display: none;
+  }
+  .loginLeft {
+    width: 100%;
+  }
 }
