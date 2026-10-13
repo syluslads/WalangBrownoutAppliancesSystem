@@ -3,23 +3,26 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
     /**
      * Seed the application's database.
+     *
+     * Creates the first Admin account for local development/testing.
+     * Change this password after seeding and never commit real credentials.
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        User::updateOrCreate(
+            ['email' => 'admin@example.test'],
+            [
+                'name'      => 'System Admin',
+                'password'  => 'ChangeThisPassword123!',
+                'role'      => 'admin',
+                'is_active' => true,
+            ]
+        );
     }
 }
