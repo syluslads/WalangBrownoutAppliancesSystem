@@ -1,10 +1,14 @@
 <?php
 
+use App\Http\Controllers\Api\AuditController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\StockInController;
+use App\Http\Controllers\Api\StockOutController;
 use App\Http\Controllers\Api\SupplierController;
+use App\Http\Controllers\Api\SystemSettingController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -91,6 +95,44 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::middleware('role:admin,warehouse_staff')->group(function () {
         Route::post('/inventory/stock-in', [StockInController::class, 'store']);
+    });
+
+    // -------------------------------------------------------------------------
+    // Inventory — Stock-Out (Developer 3)
+    // Perform: admin and warehouse_staff (blueprint rule #7)
+    // History: all authenticated users can view stock-out records
+    // -------------------------------------------------------------------------
+    Route::get('/inventory/stock-out',          [StockOutController::class, 'index']);
+    Route::get('/inventory/stock-out/{stockOutRecord}', [StockOutController::class, 'show']);
+
+    Route::middleware('role:admin,warehouse_staff')->group(function () {
+        Route::post('/inventory/stock-out', [StockOutController::class, 'store']);
+    });
+
+    // -------------------------------------------------------------------------
+    // Dashboard — KPIs, alerts, and recent transactions (Developer 3)
+    // All authenticated roles can view the dashboard.
+    // -------------------------------------------------------------------------
+    Route::get('/dashboard',        [DashboardController::class, 'index']);
+    Route::get('/dashboard/kpis',   [DashboardController::class, 'kpisEndpoint']);
+    Route::get('/dashboard/alerts', [DashboardController::class, 'alertsEndpoint']);
+
+    // -------------------------------------------------------------------------
+    // Audit Trail (Developer 3)
+    // All authenticated roles can view the audit trail.
+    // -------------------------------------------------------------------------
+    Route::get('/audit', [AuditController::class, 'index']);
+
+    // -------------------------------------------------------------------------
+    // System Settings (Developer 3)
+    // Read: all authenticated users (for thresholds used in alerts).
+    // Write: admin only (blueprint rule #8).
+    // -------------------------------------------------------------------------
+    Route::get('/settings',      [SystemSettingController::class, 'index']);
+    Route::get('/settings/{key}', [SystemSettingController::class, 'show']);
+
+    Route::middleware('role:admin')->group(function () {
+        Route::put('/settings', [SystemSettingController::class, 'update']);
     });
 
 });

@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useOutletContext } from 'react-router-dom';
+import { getDashboard } from '../lib/api';
 import {
   mockKPIs,
   mockAlerts,
@@ -33,13 +34,38 @@ const severityClass = {
 
 const typeClass = {
   'Stock-In': 'pill-green',
+  'IN': 'pill-green',
   'Stock-Out': 'pill-red',
+  'OUT': 'pill-red',
   Adjustment: 'pill-amber',
 };
 
 const Dashboard = () => {
   const { user } = useOutletContext() || {};
   const [notice, setNotice] = useState('');
+
+  // Live data state — falls back to mock data while loading or on error.
+  const [kpis, setKpis] = useState(mockKPIs);
+  const [alerts, setAlerts] = useState(mockAlerts);
+  const [recentTx, setRecentTx] = useState(mockRecentTransactions);
+  const [apiError, setApiError] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+
+    getDashboard()
+      .then((data) => {
+        if (cancelled) return;
+        if (data.kpis?.length)               setKpis(data.kpis);
+        if (data.alerts !== undefined)        setAlerts(data.alerts);
+        if (data.recent_transactions?.length) setRecentTx(data.recent_transactions);
+      })
+      .catch(() => {
+        if (!cancelled) setApiError('Live data unavailable — showing demo data.');
+      });
+
+    return () => { cancelled = true; };
+  }, []);
 
   const blocked = (label) => {
     setNotice(`🔒 ${label} is restricted for ${user?.role || 'your role'}.`);
@@ -86,9 +112,15 @@ const Dashboard = () => {
       </div>
 
       {notice && <div className="inline-notice">{notice}</div>}
+      {apiError && (
+        <div className="inline-notice" style={{ background: '#fef3c7', color: '#92400e', borderColor: '#fcd34d' }}>
+          ⚠️ {apiError}
+        </div>
+      )}
 
+      {/* KPI Cards */}
       <div className="kpi-grid">
-        {mockKPIs.map((kpi, index) => {
+        {kpis.map((kpi, index) => {
           const Icon = kpiIcon[kpi.icon] || IconBox;
           return (
             <div key={index} className={`kpi-card kpi-tone-${kpi.tone}`}>
@@ -103,21 +135,27 @@ const Dashboard = () => {
       </div>
 
       <div className="dashboard-columns">
+        {/* System Alerts */}
         <div className="panel">
           <h3>SYSTEM ALERTS</h3>
-          <ul className="alerts-list">
-            {mockAlerts.map((alert, index) => (
-              <li key={index} className={`alert-item ${severityClass[alert.severity]}`}>
-                <span className="alert-icon"><IconAlert size={16} /></span>
-                <div>
-                  <span className="alert-type">{alert.type}</span>
-                  <p>{alert.message}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
+          {alerts.length === 0 ? (
+            <p className="view-subtitle">No active alerts. All stock levels are healthy.</p>
+          ) : (
+            <ul className="alerts-list">
+              {alerts.map((alert, index) => (
+                <li key={index} className={`alert-item ${severityClass[alert.severity]}`}>
+                  <span className="alert-icon"><IconAlert size={16} /></span>
+                  <div>
+                    <span className="alert-type">{alert.type}</span>
+                    <p>{alert.message}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
+        {/* Recent Transactions */}
         <div className="panel">
           <h3>RECENT TRANSACTIONS</h3>
           <table className="data-table">
@@ -131,12 +169,18 @@ const Dashboard = () => {
               </tr>
             </thead>
             <tbody>
-              {mockRecentTransactions.map((tx, index) => (
+              {recentTx.map((tx, index) => (
                 <tr key={index}>
                   <td>{tx.date}</td>
                   <td>{tx.product}</td>
-                  <td><span className={`status-pill ${typeClass[tx.type] || 'pill-blue'}`}>{tx.type}</span></td>
-                  <td style={{ fontWeight: 700, color: tx.qty.startsWith('+') ? '#16a34a' : '#dc2626' }}>{tx.qty}</td>
+                  <td>
+                    <span className={`status-pill ${typeClass[tx.type] || 'pill-blue'}`}>
+                      {tx.type}
+                    </span>
+                  </td>
+                  <td style={{ fontWeight: 700, color: String(tx.qty).startsWith('+') ? '#16a34a' : '#dc2626' }}>
+                    {tx.qty}
+                  </td>
                   <td>{tx.staff}</td>
                 </tr>
               ))}
@@ -145,6 +189,7 @@ const Dashboard = () => {
         </div>
       </div>
 
+      {/* ABC Analysis */}
       <div className="panel" style={{ marginTop: 24 }}>
         <h3>INVENTORY CATEGORIZATION (ABC ANALYSIS)</h3>
         <p className="view-subtitle" style={{ marginBottom: 18 }}>
