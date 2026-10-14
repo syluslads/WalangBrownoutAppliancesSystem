@@ -120,8 +120,6 @@ export async function toggleUserActive(id) {
 // Dashboard
 // -------------------------------------------------------------------------
 
-let cachedDashboard = null;
-
 /** GET /api/dashboard → { kpis, alerts, recent_transactions } */
 export async function getDashboard() {
   const { data } = await api.get('/dashboard');
@@ -132,116 +130,37 @@ export async function getDashboard() {
 // Products
 // -------------------------------------------------------------------------
 
-const formatMockProductList = () => {
-  return mockProducts.map((p, i) => ({
-    id: i + 1,
-    name: p.name,
-    sku: p.id,
-    description: `${p.classification} — ${p.ropType}`,
-    category: {
-      id: (i % mockCategories.length) + 1,
-      name: p.category || mockCategories[i % mockCategories.length].name,
-    },
-    supplier: {
-      id: (i % mockSuppliers.length) + 1,
-      name: mockSuppliers[i % mockSuppliers.length].name,
-    },
-    unit: 'unit',
-    unit_price: 8900 + i * 1500,
-    is_perishable: p.isPerishable,
-    abc_class: p.abcClass,
-    reorder_point: p.reorderPoint,
-    safety_stock: p.safetyStock,
-    current_stock: p.currentStock,
-    is_active: true,
-  }));
-};
-
 /**
  * GET /api/products
- * Supports optional filters: { category_id, supplier_id, is_active, search }
+ * Supports optional filters: { category_id, supplier_id, is_active, search, per_page }
  */
 export async function getProducts(params = {}) {
-  try {
-    const { data } = await api.get('/products', { params });
-    if (data?.data && data.data.length > 0) {
-      return data;
-    }
-  } catch {
-    // Continue to mock fallback
-  }
-
-  let list = formatMockProductList();
-  if (params.category_id) {
-    list = list.filter(p => p.category?.id === Number(params.category_id));
-  }
-  if (params.search) {
-    const q = params.search.toLowerCase().trim();
-    list = list.filter(p =>
-      p.name.toLowerCase().includes(q) ||
-      p.sku.toLowerCase().includes(q) ||
-      p.category?.name?.toLowerCase().includes(q)
-    );
-  }
-
-  return { data: list };
+  const { data } = await api.get('/products', { params });
+  return data;
 }
 
 /** GET /api/products/:id */
 export async function getProduct(id) {
-  try {
-    const { data } = await api.get(`/products/${id}`);
-    if (data?.data) return data.data;
-  } catch {}
-  const list = formatMockProductList();
-  return list.find(p => String(p.id) === String(id)) || list[0];
+  const { data } = await api.get(`/products/${id}`);
+  return data?.data ?? null;
 }
 
 /** POST /api/products */
 export async function createProduct(payload) {
-  try {
-    const { data } = await api.post('/products', payload);
-    return data;
-  } catch (err) {
-    // If backend is offline, return synthetic success
-    return {
-      data: {
-        id: Date.now(),
-        ...payload,
-        category: mockCategories.find(c => c.id === Number(payload.category_id)) || { id: payload.category_id, name: 'Category' },
-        supplier: mockSuppliers.find(s => s.id === Number(payload.supplier_id)) || { id: payload.supplier_id, name: 'Supplier' },
-        current_stock: 0,
-      },
-    };
-  }
+  const { data } = await api.post('/products', payload);
+  return data;
 }
 
 /** PUT /api/products/:id */
 export async function updateProduct(id, payload) {
-  try {
-    const { data } = await api.put(`/products/${id}`, payload);
-    return data;
-  } catch (err) {
-    return {
-      data: {
-        id,
-        ...payload,
-        category: mockCategories.find(c => c.id === Number(payload.category_id)) || { id: payload.category_id, name: 'Category' },
-        supplier: mockSuppliers.find(s => s.id === Number(payload.supplier_id)) || { id: payload.supplier_id, name: 'Supplier' },
-        current_stock: payload.current_stock ?? 50,
-      },
-    };
-  }
+  const { data } = await api.put(`/products/${id}`, payload);
+  return data;
 }
 
 /** DELETE /api/products/:id */
 export async function deleteProduct(id) {
-  try {
-    const { data } = await api.delete(`/products/${id}`);
-    return data;
-  } catch {
-    return { message: 'Product deleted.' };
-  }
+  const { data } = await api.delete(`/products/${id}`);
+  return data;
 }
 
 // -------------------------------------------------------------------------
@@ -249,11 +168,8 @@ export async function deleteProduct(id) {
 // -------------------------------------------------------------------------
 
 export async function getCategories() {
-  try {
-    const { data } = await api.get('/categories');
-    if (data?.data && data.data.length > 0) return data.data;
-  } catch {}
-  return mockCategories;
+  const { data } = await api.get('/categories');
+  return data?.data ?? [];
 }
 
 export async function createCategory(payload) {
@@ -288,11 +204,8 @@ export async function deleteCategory(id) {
 // -------------------------------------------------------------------------
 
 export async function getSuppliers() {
-  try {
-    const { data } = await api.get('/suppliers');
-    if (data?.data && data.data.length > 0) return data.data;
-  } catch {}
-  return mockSuppliers;
+  const { data } = await api.get('/suppliers');
+  return data?.data ?? [];
 }
 
 export async function createSupplier(payload) {

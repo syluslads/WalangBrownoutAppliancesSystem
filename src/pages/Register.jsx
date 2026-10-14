@@ -3,16 +3,15 @@ import background from '../assets/background.png';
 import { useNavigate } from 'react-router-dom';
 import styles from './Login.module.css';
 import { register as apiRegister, createUser as apiCreateUser } from '../lib/api';
-import { IconShield, IconBox, IconCart, IconEye, IconEyeOff } from '../components/Icons';
+import { IconBox, IconCart, IconEye, IconEyeOff } from '../components/Icons';
 
-// All role cards — Admin role requires an existing admin account (backend enforced)
+// Self-registration roles — Admin accounts are created by an existing admin via Settings → Users.
 const roleCards = [
-  { id: 'admin',              label: 'Admin',              backendRole: 'admin',              desc: 'Full system access — manage users, suppliers, categories & settings.', icon: 'shield' },
-  { id: 'warehouse_staff',    label: 'Warehouse Staff',    backendRole: 'warehouse_staff',    desc: 'Handles day-to-day Stock-In / Stock-Out and scanning.',               icon: 'box'    },
-  { id: 'purchasing_manager', label: 'Purchasing Manager', backendRole: 'purchasing_manager', desc: 'Reviews reorder points and approves replenishment.',                   icon: 'cart'   },
+  { id: 'warehouse_staff',    label: 'Warehouse Staff',    backendRole: 'warehouse_staff',    desc: 'Handles day-to-day Stock-In / Stock-Out and scanning.',             icon: 'box'  },
+  { id: 'purchasing_manager', label: 'Purchasing Manager', backendRole: 'purchasing_manager', desc: 'Reviews reorder points and approves replenishment.',                 icon: 'cart' },
 ];
 
-const roleIcon = { shield: IconShield, box: IconBox, cart: IconCart };
+const roleIcon = { box: IconBox, cart: IconCart };
 
 // Maps backend role strings to the display labels used in permissions.js
 const backendRoleToDisplayRole = {

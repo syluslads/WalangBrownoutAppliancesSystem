@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { stockOut, getStockOutRecords, getProducts } from '../lib/api';
-import { mockStockOutRecords, mockProducts } from '../data/product';
 import { IconStockOut, IconLayers } from '../components/Icons';
 
 const StockOut = () => {
@@ -46,15 +45,7 @@ const StockOut = () => {
       })
       .catch(() => {
         if (!cancelled) {
-          // Fall back to mock data if API is unavailable.
-          setProducts(mockProducts.map((p, i) => ({ id: i + 1, name: p.name, sku: p.id, current_stock: p.currentStock, is_perishable: p.isPerishable })));
-          setRecords(mockStockOutRecords.map((r, i) => ({
-            id: r.id,
-            product: { name: r.product },
-            quantity_fulfilled: r.qty,
-            allocations: [{ batch: { batch_number: r.batch } }],
-            created_at: r.date,
-          })));
+          setError('Could not load data from server. Please refresh the page.');
         }
       })
       .finally(() => { if (!cancelled) setLoading(false); });
