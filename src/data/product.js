@@ -25,10 +25,10 @@ export const roles = [
 ];
 
 export const mockKPIs = [
-  { label: "Total Products", value: "1,248", icon: "box", tone: "blue" },
-  { label: "Low Stock Items", value: "14", icon: "trend-down", tone: "amber" },
-  { label: "Near Expiry Items", value: "8", icon: "clock", tone: "red" },
-  { label: "Reserved Stocks", value: "320", icon: "lock", tone: "violet" },
+  { label: "Total Active Products", value: "6", icon: "box", tone: "blue" },
+  { label: "Low Stock Items", value: "3", icon: "trend-down", tone: "amber" },
+  { label: "Near Expiry Items", value: "1", icon: "clock", tone: "red" },
+  { label: "Available Units", value: "542", icon: "lock", tone: "violet" },
 ];
 
 export const mockAlerts = [
@@ -170,9 +170,12 @@ export const mockAuditTrails = [
 
 // Section 5.2 "Suppliers Table"
 export const mockSuppliers = [
-  { id: 1, name: "ColdBreeze Industries", contact: "Marife Santos", phone: "0917-123-4567", email: "sales@coldbreeze.ph" },
-  { id: 2, name: "PureAir Manufacturing", contact: "Renz Villanueva", phone: "0918-555-2231", email: "orders@pureair.ph" },
-  { id: 3, name: "NimbusTech Thermostats", contact: "Joy Fernandez", phone: "0920-777-8899", email: "partners@nimbustech.io" },
+  { id: 1, name: "ColdBreeze Industries (Philippines)", contact: "Marife Santos", phone: "0917-123-4567", email: "sales@coldbreeze.ph", address: "Laguna Technopark, Biñan" },
+  { id: 2, name: "PureAir Manufacturing Corp.", contact: "Renz Villanueva", phone: "0918-555-2231", email: "orders@pureair.ph", address: "Mandaue City, Cebu" },
+  { id: 3, name: "NimbusTech Smart Thermostats", contact: "Joy Fernandez", phone: "0920-777-8899", email: "partners@nimbustech.io", address: "BGC Taguig City" },
+  { id: 4, name: "Carrier & Concepcion Industrial", contact: "Eduardo Concepcion", phone: "0917-888-9900", email: "supply@carrier-ph.com", address: "Muntinlupa City" },
+  { id: 5, name: "EcoFlow Power Solutions PH", contact: "Angela Cruz", phone: "0919-444-1234", email: "b2b@ecoflow.ph", address: "Ortigas, Pasig City" },
+  { id: 6, name: "Panasonic Appliance Solutions", contact: "Kenji Tanaka", phone: "0922-333-4455", email: "appliances@panasonic.com.ph", address: "Taytay, Rizal" },
 ];
 
 // Section 5.2 "Categories Table"
@@ -181,6 +184,8 @@ export const mockCategories = [
   { id: 2, name: "Air Purifiers", type: "Non-Seasonal", description: "Stable year-round demand." },
   { id: 3, name: "Replacement Filters", type: "Perishable / FIFO", description: "9-month carbon lining shelf life." },
   { id: 4, name: "Smart Thermostats", type: "Fast-Moving", description: "High turnover, maintain safety stock." },
+  { id: 5, name: "Solar & Backup Power Solutions", type: "Non-Seasonal", description: "Inverters, battery stations, emergency power." },
+  { id: 6, name: "Kitchen & Domestic Appliances", type: "Fast-Moving", description: "Electric stoves, induction cookers, microwaves." },
 ];
 
 // Section 5.2 "Users Table"

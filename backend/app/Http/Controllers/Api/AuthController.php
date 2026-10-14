@@ -230,6 +230,10 @@ class AuthController extends Controller
      */
     public function toggleUserActive(User $user): JsonResponse
     {
+        if ($user->id === auth()->id()) {
+            return response()->json(['message' => 'You cannot deactivate your own account.'], 403);
+        }
+
         $user->update(['is_active' => ! $user->is_active]);
         return response()->json(['user' => $this->userPayload($user)]);
     }

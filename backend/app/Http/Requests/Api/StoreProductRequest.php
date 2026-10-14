@@ -22,6 +22,7 @@ class StoreProductRequest extends FormRequest
             'unit'          => ['nullable', 'string', 'max:50'],
             'unit_price'    => ['nullable', 'numeric', 'min:0'],
             'is_perishable' => ['nullable', 'boolean'],
+            'abc_class'     => ['nullable', 'string', \Illuminate\Validation\Rule::in(['A', 'B', 'C'])],
             'reorder_point' => ['nullable', 'integer', 'min:0'],
             'safety_stock'  => ['nullable', 'integer', 'min:0'],
             'is_active'     => ['nullable', 'boolean'],

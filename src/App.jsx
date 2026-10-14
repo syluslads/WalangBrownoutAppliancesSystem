@@ -4,6 +4,7 @@ import Sidebar from './components/Sidebar';
 import Topbar from './components/Topbar';
 import RestrictedAccess from './components/RestrictedAccess';
 import LoginForm from './pages/LoginForm';
+import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Products from './pages/Products';
 import StockIn from './pages/StockIn';
@@ -12,16 +13,28 @@ import AuditTrails from './pages/AuditTrails';
 import Settings from './pages/Settings';
 import { canAccessPage, PAGES } from './data/permissions';
 import { getStoredUser, logout as apiLogout } from './lib/api';
+import { initThemeSystem } from './lib/theme';
 import './App.css';
 
-const MainLayout = ({ user, onLogout }) => {
+const MainLayout = ({ user, setUser, onLogout }) => {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   return (
     <div className="app-container">
-      <Sidebar user={user} onLogout={onLogout} />
+      <Sidebar
+        user={user}
+        onLogout={onLogout}
+        isOpen={mobileMenuOpen}
+        onClose={() => setMobileMenuOpen(false)}
+      />
       <div className="content-area">
-        <Topbar user={user} />
+        <Topbar
+          user={user}
+          onLogout={onLogout}
+          onToggleMobileMenu={() => setMobileMenuOpen(prev => !prev)}
+        />
         <main className="main-content">
-          <Outlet context={{ user }} />
+          <Outlet context={{ user, setUser }} />
         </main>
       </div>
     </div>
@@ -43,6 +56,11 @@ function App() {
   // not drop the session (the token is persisted; we just need the user object).
   const [user, setUser] = useState(() => getStoredUser());
 
+  // Apply theme and compact mode preferences on startup + listen to OS system changes
+  useEffect(() => {
+    initThemeSystem();
+  }, []);
+
   const handleLogin = (loggedInUser) => {
     setUser(loggedInUser);
     navigate('/dashboard');
@@ -54,8 +72,6 @@ function App() {
     navigate('/');
   };
 
-  // If the page is refreshed while on a protected route but there is no
-  // stored user, redirect to login.
   const isLoggedIn = Boolean(user);
 
   return (
@@ -69,11 +85,20 @@ function App() {
         }
       />
 
+      <Route
+        path="/register"
+        element={
+          isLoggedIn
+            ? <Navigate to="/dashboard" replace />
+            : <Register onLogin={handleLogin} />
+        }
+      />
+
       {/* Protected layout — redirect to login if not authenticated */}
       <Route
         element={
           isLoggedIn
-            ? <MainLayout user={user} onLogout={handleLogout} />
+            ? <MainLayout user={user} setUser={setUser} onLogout={handleLogout} />
             : <Navigate to="/" replace />
         }
       >

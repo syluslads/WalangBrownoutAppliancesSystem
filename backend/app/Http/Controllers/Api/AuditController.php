@@ -29,7 +29,7 @@ class AuditController extends Controller
     {
         $request->validate([
             'product_id' => ['nullable', 'integer', 'exists:products,id'],
-            'type'       => ['nullable', 'string', 'in:IN,OUT,ADJUSTMENT'],
+            'type'       => ['nullable', 'string', 'in:IN,OUT,ADJUSTMENT,PRODUCT_CREATED,PRODUCT_UPDATED,PRODUCT_DELETED,SETTING_UPDATED,USER_UPDATED'],
             'user_id'    => ['nullable', 'integer', 'exists:users,id'],
             'date_from'  => ['nullable', 'date'],
             'date_to'    => ['nullable', 'date', 'after_or_equal:date_from'],

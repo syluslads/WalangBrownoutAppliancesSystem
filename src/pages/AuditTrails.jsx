@@ -3,9 +3,14 @@ import { getAuditTrail, getProducts, getUsers } from '../lib/api';
 import { IconSearch } from '../components/Icons';
 
 const typePill = {
-  IN:         'pill-green',
-  OUT:        'pill-red',
-  ADJUSTMENT: 'pill-amber',
+  IN:              'pill-green',
+  OUT:             'pill-red',
+  ADJUSTMENT:      'pill-amber',
+  PRODUCT_CREATED: 'pill-blue',
+  PRODUCT_UPDATED: 'pill-violet',
+  PRODUCT_DELETED: 'pill-slate',
+  SETTING_UPDATED: 'pill-amber',
+  USER_UPDATED:    'pill-blue',
 };
 
 const AuditTrails = () => {
@@ -123,9 +128,14 @@ const AuditTrails = () => {
           className="filter-select"
         >
           <option value="">All Types</option>
-          <option value="IN">IN</option>
-          <option value="OUT">OUT</option>
-          <option value="ADJUSTMENT">ADJUSTMENT</option>
+          <option value="IN">Stock In</option>
+          <option value="OUT">Stock Out</option>
+          <option value="ADJUSTMENT">Adjustment</option>
+          <option value="PRODUCT_CREATED">Product Created</option>
+          <option value="PRODUCT_UPDATED">Product Updated</option>
+          <option value="PRODUCT_DELETED">Product Deleted</option>
+          <option value="SETTING_UPDATED">Setting Updated</option>
+          <option value="USER_UPDATED">User Updated</option>
         </select>
 
         <select

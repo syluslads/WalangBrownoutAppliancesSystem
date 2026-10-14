@@ -20,6 +20,7 @@ class Product extends Model
         'unit',
         'unit_price',
         'is_perishable',
+        'abc_class',
         'reorder_point',
         'safety_stock',
         'is_active',

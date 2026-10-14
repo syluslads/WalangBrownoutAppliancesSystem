@@ -40,7 +40,7 @@ const NAV_SECTIONS = [
   },
 ];
 
-const Sidebar = ({ user, onLogout }) => {
+const Sidebar = ({ user, onLogout, isOpen = false, onClose }) => {
   const [notice, setNotice] = useState('');
   const timeoutRef = useRef(null);
 
@@ -50,69 +50,84 @@ const Sidebar = ({ user, onLogout }) => {
     timeoutRef.current = setTimeout(() => setNotice(''), 2800);
   };
 
+  const handleNavClick = () => {
+    if (onClose) onClose();
+  };
+
   return (
-    <aside className="sidebar">
-      <div className="brand">
-        <div className="logo-box">WB</div>
-        <div>
-          <h3>WalangBrownout</h3>
-          <p className="sub-text">Inventory Portal</p>
+    <>
+      {isOpen && (
+        <div
+          className="sidebar-backdrop active"
+          onClick={onClose}
+          aria-label="Close menu"
+        />
+      )}
+
+      <aside className={`sidebar ${isOpen ? 'mobile-open' : ''}`}>
+        <div className="brand">
+          <div className="logo-box">WB</div>
+          <div>
+            <h3>WalangBrownout</h3>
+            <p className="sub-text">Inventory Portal</p>
+          </div>
         </div>
-      </div>
 
-      <nav className="nav-menu">
-        {NAV_SECTIONS.map((section) => (
-          <React.Fragment key={section.label}>
-            <p className="nav-section-label">{section.label}</p>
-            {section.items.map((item) => {
-              const Icon = item.icon;
-              const allowed = canAccessPage(user?.role, item.key);
+        <nav className="nav-menu">
+          {NAV_SECTIONS.map((section) => (
+            <React.Fragment key={section.label}>
+              <p className="nav-section-label">{section.label}</p>
+              {section.items.map((item) => {
+                const Icon = item.icon;
+                const allowed = canAccessPage(user?.role, item.key);
 
-              if (!allowed) {
+                if (!allowed) {
+                  return (
+                    <button
+                      key={item.key}
+                      type="button"
+                      className="nav-item nav-item-locked"
+                      onClick={() => showRestrictedNotice(item.text)}
+                    >
+                      <span className="icon"><Icon size={18} /></span>
+                      {item.text}
+                      <span className="nav-lock"><IconLock size={13} /></span>
+                    </button>
+                  );
+                }
+
                 return (
-                  <button
+                  <NavLink
                     key={item.key}
-                    type="button"
-                    className="nav-item nav-item-locked"
-                    onClick={() => showRestrictedNotice(item.text)}
+                    to={item.to}
+                    onClick={handleNavClick}
+                    className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
                   >
                     <span className="icon"><Icon size={18} /></span>
                     {item.text}
-                    <span className="nav-lock"><IconLock size={13} /></span>
-                  </button>
+                  </NavLink>
                 );
-              }
+              })}
+            </React.Fragment>
+          ))}
+        </nav>
 
-              return (
-                <NavLink
-                  key={item.key}
-                  to={item.to}
-                  className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-                >
-                  <span className="icon"><Icon size={18} /></span>
-                  {item.text}
-                </NavLink>
-              );
-            })}
-          </React.Fragment>
-        ))}
-      </nav>
+        {notice && <div className="sidebar-notice">{notice}</div>}
 
-      {notice && <div className="sidebar-notice">{notice}</div>}
-
-      <div className="sidebar-footer">
-        <div className="user-card">
-          <span className="user-avatar">{initials(user?.name)}</span>
-          <div className="user-card-text">
-            <span className="user-card-name">{user?.name || 'Guest User'}</span>
-            <span className="user-card-role">{user?.role || 'Not signed in'}</span>
+        <div className="sidebar-footer">
+          <div className="user-card">
+            <span className="user-avatar">{initials(user?.name)}</span>
+            <div className="user-card-text">
+              <span className="user-card-name">{user?.name || 'Guest User'}</span>
+              <span className="user-card-role">{user?.role || 'Not signed in'}</span>
+            </div>
           </div>
+          <button className="logout-btn" onClick={onLogout}>
+            <span className="icon"><IconLogout size={18} /></span> Log Out
+          </button>
         </div>
-        <button className="logout-btn" onClick={onLogout}>
-          <span className="icon"><IconLogout size={18} /></span> Log Out
-        </button>
-      </div>
-    </aside>
+      </aside>
+    </>
   );
 };
 

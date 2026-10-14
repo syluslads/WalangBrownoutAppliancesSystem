@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useOutletContext } from 'react-router-dom';
-import { getDashboard } from '../lib/api';
-import { mockCategoryBreakdown } from '../data/product';
+import { getDashboard, getProducts } from '../lib/api';
 import { canAccessPage, canManageProducts } from '../data/permissions';
 import {
   IconBox,
@@ -59,6 +58,29 @@ const Dashboard = () => {
   const kpis    = dashboardData?.kpis ?? [];
   const alerts  = dashboardData?.alerts ?? [];
   const recentTx = dashboardData?.recent_transactions ?? [];
+
+  // ABC breakdown computed from real dashboard data or products
+  const [abcBreakdown, setAbcBreakdown] = useState([]);
+  useEffect(() => {
+    getProducts({ per_page: 200 })
+      .then(res => {
+        const prods = res?.data ?? [];
+        if (prods.length === 0) return;
+        const total = prods.length;
+        const aCount = prods.filter(p => p.abc_class === 'A').length;
+        const bCount = prods.filter(p => p.abc_class === 'B').length;
+        const cCount = prods.filter(p => p.abc_class === 'C').length;
+        const aEx = prods.find(p => p.abc_class === 'A')?.name ?? 'High-value products';
+        const bEx = prods.find(p => p.abc_class === 'B')?.name ?? 'Moderate-demand products';
+        const cEx = prods.find(p => p.abc_class === 'C')?.name ?? 'Low-value products';
+        setAbcBreakdown([
+          { label: 'A Items — High value, high sales', example: aEx, pct: Math.round((aCount / total) * 100), color: '#2563eb' },
+          { label: 'B Items — Moderate value & demand', example: bEx, pct: Math.round((bCount / total) * 100), color: '#7c3aed' },
+          { label: 'C Items — Low value, slow-moving', example: cEx, pct: Math.round((cCount / total) * 100), color: '#94a3b8' },
+        ]);
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -210,7 +232,7 @@ const Dashboard = () => {
       </div>
 
       {/* ABC Analysis */}
-      {dashboardData !== null && (
+      {dashboardData !== null && abcBreakdown.length > 0 && (
         <div className="panel" style={{ marginTop: 24 }}>
           <h3>INVENTORY CATEGORIZATION (ABC ANALYSIS)</h3>
           <p className="view-subtitle" style={{ marginBottom: 18 }}>
@@ -218,7 +240,7 @@ const Dashboard = () => {
             from frequent demand forecasting down to periodic manual review.
           </p>
           <div className="category-breakdown">
-            {mockCategoryBreakdown.map((cat) => (
+            {abcBreakdown.map((cat) => (
               <div className="category-row" key={cat.label}>
                 <div className="category-row-label">
                   <span className="category-dot" style={{ backgroundColor: cat.color }} />
