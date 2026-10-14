@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { getAuditTrail } from '../lib/api';
-import { mockAuditTrails } from '../data/product';
+import { getAuditTrail, getProducts, getUsers } from '../lib/api';
 import { IconSearch } from '../components/Icons';
 
 const typePill = {
-  IN:  'pill-green',
-  OUT: 'pill-red',
+  IN:         'pill-green',
+  OUT:        'pill-red',
   ADJUSTMENT: 'pill-amber',
 };
 
@@ -21,6 +20,10 @@ const AuditTrails = () => {
   const [dateFrom, setDateFrom]   = useState('');
   const [dateTo, setDateTo]       = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [filterProductId, setFilterProductId] = useState('');
+  const [filterUserId, setFilterUserId]       = useState('');
+  const [products, setProducts]               = useState([]);
+  const [users, setUsers]                     = useState([]);
 
   const fetchRecords = useCallback(async (params = {}) => {
     setLoading(true);
@@ -36,18 +39,8 @@ const AuditTrails = () => {
         to:          data.to,
       });
     } catch {
-      setError('Could not load audit trail. Showing demo data.');
-      setRecords(
-        mockAuditTrails.map((item, idx) => ({
-          id:          idx + 1,
-          timestamp:   item.timestamp,
-          product:     item.product,
-          type:        item.type,
-          qty_change:  item.qtyChange,
-          staff:       item.staff,
-          notes:       item.remarks,
-        }))
-      );
+      setError('Could not load audit trail.');
+      setRecords([]);
     } finally {
       setLoading(false);
     }
@@ -58,15 +51,23 @@ const AuditTrails = () => {
     fetchRecords({ page: 1 });
   }, [fetchRecords]);
 
+  // Load products and users for filter dropdowns
+  useEffect(() => {
+    getProducts({ per_page: 200 }).then(res => setProducts(res?.data ?? [])).catch(() => {});
+    getUsers().then(u => setUsers(u ?? [])).catch(() => {});
+  }, []);
+
   const handleFilter = (e) => {
     e.preventDefault();
     setCurrentPage(1);
     fetchRecords({
-      search:    search   || undefined,
-      type:      filterType || undefined,
-      date_from: dateFrom || undefined,
-      date_to:   dateTo   || undefined,
-      page:      1,
+      search:      search          || undefined,
+      type:        filterType      || undefined,
+      date_from:   dateFrom        || undefined,
+      date_to:     dateTo          || undefined,
+      product_id:  filterProductId || undefined,
+      user_id:     filterUserId    || undefined,
+      page:        1,
     });
   };
 
@@ -75,6 +76,8 @@ const AuditTrails = () => {
     setFilterType('');
     setDateFrom('');
     setDateTo('');
+    setFilterProductId('');
+    setFilterUserId('');
     setCurrentPage(1);
     fetchRecords({ page: 1 });
   };
@@ -82,13 +85,17 @@ const AuditTrails = () => {
   const handlePageChange = (page) => {
     setCurrentPage(page);
     fetchRecords({
-      search:    search    || undefined,
-      type:      filterType || undefined,
-      date_from: dateFrom  || undefined,
-      date_to:   dateTo    || undefined,
+      search:      search          || undefined,
+      type:        filterType      || undefined,
+      date_from:   dateFrom        || undefined,
+      date_to:     dateTo          || undefined,
+      product_id:  filterProductId || undefined,
+      user_id:     filterUserId    || undefined,
       page,
     });
   };
+
+  const activeFilterCount = [search, filterType, dateFrom, dateTo, filterProductId, filterUserId].filter(Boolean).length;
 
   return (
     <div className="view-container">
@@ -118,7 +125,32 @@ const AuditTrails = () => {
           <option value="">All Types</option>
           <option value="IN">IN</option>
           <option value="OUT">OUT</option>
+          <option value="ADJUSTMENT">ADJUSTMENT</option>
         </select>
+
+        <select
+          value={filterProductId}
+          onChange={(e) => setFilterProductId(e.target.value)}
+          className="filter-select"
+        >
+          <option value="">All Products</option>
+          {products.map(p => (
+            <option key={p.id} value={p.id}>{p.name}</option>
+          ))}
+        </select>
+
+        {users.length > 0 && (
+          <select
+            value={filterUserId}
+            onChange={(e) => setFilterUserId(e.target.value)}
+            className="filter-select"
+          >
+            <option value="">All Staff</option>
+            {users.map(u => (
+              <option key={u.id} value={u.id}>{u.name}</option>
+            ))}
+          </select>
+        )}
 
         <input
           type="date"
@@ -136,10 +168,15 @@ const AuditTrails = () => {
         />
 
         <button type="submit" className="btn-dark">Filter</button>
-        {(search || filterType || dateFrom || dateTo) && (
-          <button type="button" className="btn-secondary" onClick={handleClearFilters}>
-            Clear
-          </button>
+        {activeFilterCount > 0 && (
+          <>
+            <button type="button" className="btn-secondary" onClick={handleClearFilters}>
+              Clear
+            </button>
+            <span style={{ fontSize: 12, color: '#64748b', padding: '0 6px' }}>
+              {activeFilterCount} filter{activeFilterCount > 1 ? 's' : ''} active
+            </span>
+          </>
         )}
       </form>
 

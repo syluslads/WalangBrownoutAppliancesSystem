@@ -19,15 +19,8 @@ class DatabaseSeeder extends Seeder
         // -----------------------------------------------------------------
         // First Admin account
         // -----------------------------------------------------------------
-        User::updateOrCreate(
-            ['email' => 'admin@example.test'],
-            [
-                'name'      => 'System Admin',
-                'password'  => 'ChangeThisPassword123!',
-                'role'      => 'admin',
-                'is_active' => true,
-            ]
-        );
+        $this->call(AdminSeeder::class);
+        $this->call(DummyDataSeeder::class);
 
         // -----------------------------------------------------------------
         // Default system settings (blueprint Section 12)

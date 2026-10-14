@@ -13,8 +13,7 @@ use Illuminate\Validation\ValidationException;
 class AuthController extends Controller
 {
     /**
-     * Register a new user (warehouse_staff or purchasing_manager only).
-     * Admin accounts cannot be created via public registration.
+     * Register a new user (admin, warehouse_staff, or purchasing_manager).
      */
     public function register(Request $request): JsonResponse
     {
@@ -129,15 +128,109 @@ class AuthController extends Controller
     }
 
     /**
+     * Admin-only: create a user with any role (including admin).
+     */
+    public function createUser(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'name'     => ['required', 'string', 'max:255'],
+            'email'    => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'role'     => ['required', \Illuminate\Validation\Rule::in(User::ALL_ROLES)],
+        ]);
+
+        $user = User::create([
+            'name'      => $validated['name'],
+            'email'     => $validated['email'],
+            'password'  => $validated['password'],
+            'role'      => $validated['role'],
+            'is_active' => true,
+        ]);
+
+        return response()->json([
+            'user' => $this->userPayload($user),
+        ], 201);
+    }
+
+    /**
+     * Authenticated user: update their own profile (name, email, password).
+     */
+    public function updateProfile(Request $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'name'                  => ['sometimes', 'string', 'max:255'],
+            'email'                 => ['sometimes', 'string', 'email', 'max:255', \Illuminate\Validation\Rule::unique('users', 'email')->ignore($user->id)],
+            'password'              => ['sometimes', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        $user->update($validated);
+
+        return response()->json([
+            'message' => 'Profile updated successfully.',
+            'user'    => $this->userPayload($user->fresh()),
+        ]);
+    }
+
+    /**
      * Build the user payload returned in auth responses.
      */
     private function userPayload(User $user): array
     {
         return [
-            'id'    => $user->id,
-            'name'  => $user->name,
-            'email' => $user->email,
-            'role'  => $user->role,
+            'id'        => $user->id,
+            'name'      => $user->name,
+            'email'     => $user->email,
+            'role'      => $user->role,
+            'is_active' => $user->is_active,
         ];
+    }
+
+    /**
+     * Admin-only: list all users.
+     */
+    public function listUsers(Request $request): JsonResponse
+    {
+        $users = User::orderBy('created_at', 'desc')->get();
+        return response()->json(['data' => $users->map(fn($u) => $this->userPayload($u))]);
+    }
+
+    /**
+     * Admin-only: update a user.
+     */
+    public function updateUser(Request $request, User $user): JsonResponse
+    {
+        $validated = $request->validate([
+            'name'  => ['sometimes', 'string', 'max:255'],
+            'email' => ['sometimes', 'string', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
+            'role'  => ['sometimes', Rule::in(User::ALL_ROLES)],
+        ]);
+        $user->update($validated);
+        return response()->json(['user' => $this->userPayload($user)]);
+    }
+
+    /**
+     * Admin-only: delete a user.
+     */
+    public function deleteUser(User $user): JsonResponse
+    {
+        if ($user->id === auth()->id()) {
+            return response()->json(['message' => 'You cannot delete your own account.'], 403);
+        }
+
+        $user->tokens()->delete();
+        $user->delete();
+        return response()->json(['message' => 'User deleted.']);
+    }
+
+    /**
+     * Admin-only: toggle user active/inactive.
+     */
+    public function toggleUserActive(User $user): JsonResponse
+    {
+        $user->update(['is_active' => ! $user->is_active]);
+        return response()->json(['user' => $this->userPayload($user)]);
     }
 }

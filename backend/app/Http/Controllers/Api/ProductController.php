@@ -38,9 +38,19 @@ class ProductController extends Controller
             });
         }
 
-        $products = $query->get()->map(fn (Product $p) => $this->productPayload($p));
+        $perPage   = (int) ($request->query('per_page', 25));
+        $paginated = $query->paginate($perPage);
+        $paginated->getCollection()->transform(fn (Product $p) => $this->productPayload($p));
 
-        return response()->json(['data' => $products]);
+        return response()->json([
+            'data' => $paginated->items(),
+            'meta' => [
+                'current_page' => $paginated->currentPage(),
+                'last_page'    => $paginated->lastPage(),
+                'per_page'     => $paginated->perPage(),
+                'total'        => $paginated->total(),
+            ],
+        ]);
     }
 
     /**
@@ -113,6 +123,7 @@ class ProductController extends Controller
             'unit'          => $product->unit,
             'unit_price'    => $product->unit_price,
             'is_perishable' => $product->is_perishable,
+            'abc_class'     => $product->abc_class ?? 'C',
             'reorder_point' => $product->reorder_point,
             'safety_stock'  => $product->safety_stock,
             'current_stock' => $product->currentStock(),

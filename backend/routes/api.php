@@ -39,7 +39,18 @@ Route::middleware('auth:sanctum')->group(function () {
     // Admin-only: create additional admin accounts
     Route::middleware('role:admin')->group(function () {
         Route::post('/auth/admin', [AuthController::class, 'createAdmin']);
+        Route::post('/auth/create-user', [AuthController::class, 'createUser']);
+
+        // User management
+        Route::get('/users',                        [AuthController::class, 'listUsers']);
+        Route::put('/users/{user}',                 [AuthController::class, 'updateUser']);
+        Route::delete('/users/{user}',              [AuthController::class, 'deleteUser']);
+        Route::patch('/users/{user}/toggle-active', [AuthController::class, 'toggleUserActive']);
     });
+
+    // Any authenticated user can update their own profile
+    Route::put('/auth/profile',   [AuthController::class, 'updateProfile']);
+    Route::patch('/auth/profile', [AuthController::class, 'updateProfile']);
 
     // -------------------------------------------------------------------------
     // Categories

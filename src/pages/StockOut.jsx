@@ -8,7 +8,18 @@ const StockOut = () => {
   const [productId, setProductId] = useState('');
   const [quantity, setQuantity]   = useState('');
   const [reason, setReason]       = useState('');
+  const [customReason, setCustomReason] = useState(false);
   const [notes, setNotes]         = useState('');
+
+  const reasonChoices = [
+    'Customer Order Fulfillment',
+    'Store Branch Replenishment',
+    'Damaged / Defective Stock Return',
+    'Expired Batch Removal (FIFO)',
+    'Cycle Count Discrepancy Adjustment',
+    'Showroom Demo Unit',
+    'Supplier Return / Warranty',
+  ];
 
   // Page state
   const [products, setProducts]   = useState([]);
@@ -71,6 +82,7 @@ const StockOut = () => {
       setSuccess(
         `Stock-out recorded. ${result.data?.product?.current_stock ?? ''} unit(s) now available for ${result.data?.product?.name ?? 'this product'}.`
       );
+      window.dispatchEvent(new CustomEvent('wb:refresh-alerts'));
 
       // Refresh records list
       const updated = await getStockOutRecords();
@@ -142,15 +154,47 @@ const StockOut = () => {
             </div>
 
             <div className="form-group">
-              <label htmlFor="so-reason">Reason (optional)</label>
-              <input
-                id="so-reason"
-                type="text"
-                placeholder="e.g. Customer order #1234"
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                disabled={submitting}
-              />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <label htmlFor="so-reason">Reason</label>
+                <button
+                  type="button"
+                  style={{ background: 'none', border: 'none', color: '#3b82f6', fontSize: 12, cursor: 'pointer', padding: 0 }}
+                  onClick={() => { setCustomReason(!customReason); if (!customReason) setReason(''); }}
+                >
+                  {customReason ? '← Pick from list' : '+ Custom Reason'}
+                </button>
+              </div>
+              {customReason ? (
+                <input
+                  id="so-reason"
+                  type="text"
+                  placeholder="e.g. Warranty swap or emergency replacement"
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                  disabled={submitting}
+                  autoFocus
+                />
+              ) : (
+                <select
+                  id="so-reason"
+                  value={reason}
+                  onChange={(e) => {
+                    if (e.target.value === '__custom__') {
+                      setCustomReason(true);
+                      setReason('');
+                    } else {
+                      setReason(e.target.value);
+                    }
+                  }}
+                  disabled={submitting}
+                >
+                  <option value="">Select dispatch / issue reason…</option>
+                  {reasonChoices.map((r) => (
+                    <option key={r} value={r}>{r}</option>
+                  ))}
+                  <option value="__custom__">+ Enter Custom Reason…</option>
+                </select>
+              )}
             </div>
 
             <div className="form-group">
