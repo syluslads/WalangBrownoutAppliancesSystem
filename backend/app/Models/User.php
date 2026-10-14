@@ -36,10 +36,9 @@ class User extends Authenticatable
     }
 
     /**
-     * Roles allowed via public self-registration.
-     * Admin accounts are created only by an existing admin via the user-management panel.
+     * Roles allowed via public self-registration (includes admin).
      */
-    public const PUBLIC_ROLES = ['warehouse_staff', 'purchasing_manager'];
+    public const PUBLIC_ROLES = ['admin', 'warehouse_staff', 'purchasing_manager'];
 
     /**
      * All valid roles in the system.
