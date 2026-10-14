@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { mockUsers, mockCategories, mockSuppliers } from '../data/product';
 import { canAccessSettingsTab, roleAccessNotes, pageAccess, PAGES } from '../data/permissions';
+import { getSettings, updateSettings } from '../lib/api';
 import {
   IconUsers,
   IconLayers,
@@ -41,6 +42,46 @@ const Settings = () => {
   const { user } = useOutletContext() || {};
   const [activeTab, setActiveTab] = useState('profile');
   const [notice, setNotice] = useState('');
+
+  // Alert thresholds — loaded from the API for the Alerts tab.
+  const [thresholds, setThresholds] = useState({
+    seasonal_threshold_pct:   '30',
+    expiry_warning_months:    '8',
+    expiry_hard_limit_months: '9',
+    low_stock_notifications:  'true',
+    discrepancy_alerts:       'true',
+  });
+  const [thresholdsLoading, setThresholdsLoading] = useState(false);
+  const [thresholdsSaving,  setThresholdsSaving]  = useState(false);
+  const [thresholdsMsg,     setThresholdsMsg]     = useState('');
+
+  // Load settings when the alerts tab becomes active.
+  useEffect(() => {
+    if (activeTab !== 'alerts') return;
+    setThresholdsLoading(true);
+    getSettings()
+      .then((data) => {
+        setThresholds((prev) => ({ ...prev, ...data }));
+      })
+      .catch(() => { /* silently fall back to defaults */ })
+      .finally(() => setThresholdsLoading(false));
+  }, [activeTab]);
+
+  const handleSaveThresholds = async (e) => {
+    e.preventDefault();
+    setThresholdsSaving(true);
+    setThresholdsMsg('');
+    try {
+      await updateSettings(thresholds);
+      setThresholdsMsg('✓ Thresholds saved successfully.');
+    } catch (err) {
+      const apiMsg = err.response?.data?.message || 'Failed to save settings.';
+      setThresholdsMsg(`⚠️ ${apiMsg}`);
+    } finally {
+      setThresholdsSaving(false);
+      setTimeout(() => setThresholdsMsg(''), 4000);
+    }
+  };
 
   const handleTabClick = (tab) => {
     if (!canAccessSettingsTab(user?.role, tab.id)) {
@@ -276,73 +317,132 @@ const Settings = () => {
                     non-seasonal items, and an early-warning window for perishable filters.
                   </p>
 
-                  <div className="threshold-card">
-                    <div className="threshold-card-head">
-                      <span className="status-pill pill-blue">Seasonal Items</span>
-                      <span className="threshold-example">e.g. Portable AC Units</span>
-                    </div>
-                    <p>Trigger a reorder 2–3 months before summer, or when stock falls below:</p>
-                    <div className="form-group" style={{ maxWidth: 220 }}>
-                      <label>Seasonal threshold (%)</label>
-                      <input type="number" defaultValue={30} min={0} max={100} />
-                    </div>
-                  </div>
-
-                  <div className="threshold-card">
-                    <div className="threshold-card-head">
-                      <span className="status-pill pill-violet">Non-Seasonal Items</span>
-                      <span className="threshold-example">e.g. Smart Thermostats, Air Purifiers</span>
-                    </div>
-                    <p>Use the formula-based Reorder Point:</p>
-                    <div className="formula-box">
-                      Reorder Point (ROP) = (Average Daily Demand × Lead Time) + Safety Stock
-                    </div>
-                  </div>
-
-                  <div className="threshold-card">
-                    <div className="threshold-card-head">
-                      <span className="status-pill pill-amber">Perishable / FIFO Items</span>
-                      <span className="threshold-example">e.g. Air Purifier Filters</span>
-                    </div>
-                    <p>Flag a batch once it has been in storage for:</p>
-                    <div className="form-grid" style={{ maxWidth: 460 }}>
-                      <div className="form-group">
-                        <label>Expiry alert (months in storage)</label>
-                        <input type="number" defaultValue={8} min={0} />
+                  {thresholdsLoading ? (
+                    <p className="view-subtitle">Loading settings…</p>
+                  ) : (
+                    <form onSubmit={handleSaveThresholds}>
+                      <div className="threshold-card">
+                        <div className="threshold-card-head">
+                          <span className="status-pill pill-blue">Seasonal Items</span>
+                          <span className="threshold-example">e.g. Portable AC Units</span>
+                        </div>
+                        <p>Trigger a reorder 2–3 months before summer, or when stock falls below:</p>
+                        <div className="form-group" style={{ maxWidth: 220 }}>
+                          <label>Seasonal threshold (%)</label>
+                          <input
+                            type="number"
+                            min={0}
+                            max={100}
+                            value={thresholds.seasonal_threshold_pct}
+                            onChange={(e) => setThresholds((t) => ({ ...t, seasonal_threshold_pct: e.target.value }))}
+                          />
+                        </div>
                       </div>
-                      <div className="form-group">
-                        <label>Hard expiration limit (months)</label>
-                        <input type="number" defaultValue={9} min={0} />
+
+                      <div className="threshold-card">
+                        <div className="threshold-card-head">
+                          <span className="status-pill pill-violet">Non-Seasonal Items</span>
+                          <span className="threshold-example">e.g. Smart Thermostats, Air Purifiers</span>
+                        </div>
+                        <p>Use the formula-based Reorder Point:</p>
+                        <div className="formula-box">
+                          Reorder Point (ROP) = (Average Daily Demand × Lead Time) + Safety Stock
+                        </div>
                       </div>
-                    </div>
-                  </div>
 
-                  <div className="toggle-row">
-                    <div>
-                      <p className="toggle-title">Low-stock email notifications</p>
-                      <p className="toggle-desc">Notify Purchasing when any item reaches its reorder point.</p>
-                    </div>
-                    <label className="switch">
-                      <input type="checkbox" defaultChecked />
-                      <span className="switch-track"><span className="switch-thumb" /></span>
-                    </label>
-                  </div>
+                      <div className="threshold-card">
+                        <div className="threshold-card-head">
+                          <span className="status-pill pill-amber">Perishable / FIFO Items</span>
+                          <span className="threshold-example">e.g. Air Purifier Filters</span>
+                        </div>
+                        <p>Flag a batch once it has been in storage for:</p>
+                        <div className="form-grid" style={{ maxWidth: 460 }}>
+                          <div className="form-group">
+                            <label>Expiry alert (months in storage)</label>
+                            <input
+                              type="number"
+                              min={0}
+                              value={thresholds.expiry_warning_months}
+                              onChange={(e) => setThresholds((t) => ({ ...t, expiry_warning_months: e.target.value }))}
+                            />
+                          </div>
+                          <div className="form-group">
+                            <label>Hard expiration limit (months)</label>
+                            <input
+                              type="number"
+                              min={0}
+                              value={thresholds.expiry_hard_limit_months}
+                              onChange={(e) => setThresholds((t) => ({ ...t, expiry_hard_limit_months: e.target.value }))}
+                            />
+                          </div>
+                        </div>
+                      </div>
 
-                  <div className="toggle-row">
-                    <div>
-                      <p className="toggle-title">Discrepancy alerts (Mystery Shrinkage)</p>
-                      <p className="toggle-desc">Flag mismatches between system count and physical cycle counts.</p>
-                    </div>
-                    <label className="switch">
-                      <input type="checkbox" defaultChecked />
-                      <span className="switch-track"><span className="switch-thumb" /></span>
-                    </label>
-                  </div>
+                      <div className="toggle-row">
+                        <div>
+                          <p className="toggle-title">Low-stock email notifications</p>
+                          <p className="toggle-desc">Notify Purchasing when any item reaches its reorder point.</p>
+                        </div>
+                        <label className="switch">
+                          <input
+                            type="checkbox"
+                            checked={thresholds.low_stock_notifications === 'true' || thresholds.low_stock_notifications === '1'}
+                            onChange={(e) => setThresholds((t) => ({ ...t, low_stock_notifications: e.target.checked ? 'true' : 'false' }))}
+                          />
+                          <span className="switch-track"><span className="switch-thumb" /></span>
+                        </label>
+                      </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 8 }}>
-                    <button className="btn-secondary">Reset to Defaults</button>
-                    <button className="btn-dark">Save Thresholds</button>
-                  </div>
+                      <div className="toggle-row">
+                        <div>
+                          <p className="toggle-title">Discrepancy alerts (Mystery Shrinkage)</p>
+                          <p className="toggle-desc">Flag mismatches between system count and physical cycle counts.</p>
+                        </div>
+                        <label className="switch">
+                          <input
+                            type="checkbox"
+                            checked={thresholds.discrepancy_alerts === 'true' || thresholds.discrepancy_alerts === '1'}
+                            onChange={(e) => setThresholds((t) => ({ ...t, discrepancy_alerts: e.target.checked ? 'true' : 'false' }))}
+                          />
+                          <span className="switch-track"><span className="switch-thumb" /></span>
+                        </label>
+                      </div>
+
+                      {thresholdsMsg && (
+                        <div
+                          className="inline-notice"
+                          style={{
+                            background: thresholdsMsg.startsWith('✓') ? '#dcfce7' : '#fee2e2',
+                            color:      thresholdsMsg.startsWith('✓') ? '#166534' : '#991b1b',
+                            borderColor: thresholdsMsg.startsWith('✓') ? '#86efac' : '#fca5a5',
+                            marginBottom: 8,
+                          }}
+                        >
+                          {thresholdsMsg}
+                        </div>
+                      )}
+
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 8 }}>
+                        <button
+                          type="button"
+                          className="btn-secondary"
+                          onClick={() => setThresholds({
+                            seasonal_threshold_pct: '30',
+                            expiry_warning_months: '8',
+                            expiry_hard_limit_months: '9',
+                            low_stock_notifications: 'true',
+                            discrepancy_alerts: 'true',
+                          })}
+                          disabled={thresholdsSaving}
+                        >
+                          Reset to Defaults
+                        </button>
+                        <button type="submit" className="btn-dark" disabled={thresholdsSaving}>
+                          {thresholdsSaving ? 'Saving…' : 'Save Thresholds'}
+                        </button>
+                      </div>
+                    </form>
+                  )}
                 </div>
               )}
 

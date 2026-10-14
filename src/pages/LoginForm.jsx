@@ -1,9 +1,42 @@
 import React, { useState } from 'react';
-import background from "../assets/background.png";
+import background from '../assets/background.png';
 import { useNavigate } from 'react-router-dom';
 import styles from './Login.module.css';
-import { roles } from '../data/product';
+import { login as apiLogin } from '../lib/api';
 import { IconShield, IconBox, IconCart, IconEye, IconEyeOff, IconCheck } from '../components/Icons';
+
+// Role display cards shown on the first step of login.
+// These map to the actual backend roles stored in users.role.
+const roleCards = [
+  {
+    id: 'admin',
+    label: 'Admin',
+    backendRole: 'admin',
+    desc: 'Manages users, suppliers, categories, and system settings.',
+    icon: 'shield',
+  },
+  {
+    id: 'warehouse_staff',
+    label: 'Warehouse Staff',
+    backendRole: 'warehouse_staff',
+    desc: 'Handles day-to-day Stock-In / Stock-Out and scanning.',
+    icon: 'box',
+  },
+  {
+    id: 'purchasing_manager',
+    label: 'Purchasing Manager',
+    backendRole: 'purchasing_manager',
+    desc: 'Reviews reorder points and approves replenishment.',
+    icon: 'cart',
+  },
+];
+
+// Maps backend role strings to the display labels used in permissions.js
+const backendRoleToDisplayRole = {
+  admin: 'Admin',
+  warehouse_staff: 'Warehouse Staff',
+  purchasing_manager: 'Purchasing Manager',
+};
 
 const roleIcon = {
   shield: IconShield,
@@ -13,32 +46,62 @@ const roleIcon = {
 
 const LoginForm = ({ onLogin }) => {
   const navigate = useNavigate();
-  const [step, setStep] = useState('role'); // 'role' | 'credentials'
-  const [selectedRole, setSelectedRole] = useState(roles[0]);
-  const [username, setUsername] = useState('');
+  const [step, setStep] = useState('role');
+  const [selectedRole, setSelectedRole] = useState(roleCards[0]);
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleChooseRole = (role) => {
     setSelectedRole(role);
     setErrorMsg('');
+    setEmail('');
+    setPassword('');
     setStep('credentials');
   };
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
 
-    // UI-only demo: any non-empty username/password signs in — there is no
-    // authentication backend in this prototype.
-    if (username.trim().length === 0 || password.trim().length === 0) {
-      setErrorMsg('Please enter a username and password to continue.');
+    if (!email.trim() || !password.trim()) {
+      setErrorMsg('Please enter your email and password to continue.');
       return;
     }
 
     setErrorMsg('');
-    onLogin?.({ name: username.trim(), role: selectedRole.label });
-    navigate('/dashboard');
+    setLoading(true);
+
+    try {
+      // Call the real Laravel API. The api.js helper stores the token in
+      // localStorage and returns the raw user object.
+      const rawUser = await apiLogin(email.trim(), password.trim());
+
+      // Map the backend role string to the display label used by permissions.js
+      const displayRole = backendRoleToDisplayRole[rawUser.role] ?? rawUser.role;
+      const displayUser = { ...rawUser, role: displayRole };
+
+      // Persist the display-mapped user so App.jsx can rehydrate on page refresh.
+      localStorage.setItem('wb_user', JSON.stringify(displayUser));
+
+      onLogin?.(displayUser);
+      // Navigation is handled in App.jsx after onLogin updates state.
+    } catch (err) {
+      const status = err.response?.status;
+      if (status === 401 || status === 422) {
+        const apiMsg =
+          err.response?.data?.message ||
+          Object.values(err.response?.data?.errors || {}).flat()[0];
+        setErrorMsg(apiMsg || 'Invalid email or password.');
+      } else if (status === 403) {
+        setErrorMsg('Your account is inactive. Please contact an administrator.');
+      } else {
+        setErrorMsg('Could not connect to the server. Make sure the Laravel API is running.');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -55,7 +118,7 @@ const LoginForm = ({ onLogin }) => {
             <p className={styles.subtitle}>Choose how you'll use the inventory portal today.</p>
 
             <div className={styles.roleList}>
-              {roles.map((role) => {
+              {roleCards.map((role) => {
                 const Icon = roleIcon[role.icon];
                 return (
                   <button
@@ -89,7 +152,7 @@ const LoginForm = ({ onLogin }) => {
             </div>
 
             <h2 className={styles.title}>Welcome back</h2>
-            <p className={styles.subtitle}>Enter any username and password to continue — this is a UI prototype.</p>
+            <p className={styles.subtitle}>Enter your email and password to continue.</p>
 
             {errorMsg && (
               <div className={styles.errorBanner}>⚠️ {errorMsg}</div>
@@ -97,13 +160,15 @@ const LoginForm = ({ onLogin }) => {
 
             <form onSubmit={handleLogin}>
               <div className={styles.formGroup}>
-                <label>Username or Email</label>
+                <label>Email Address</label>
                 <input
-                  type="text"
-                  placeholder="Enter username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   autoFocus
+                  autoComplete="email"
+                  disabled={loading}
                 />
               </div>
               <div className={styles.formGroup}>
@@ -114,12 +179,15 @@ const LoginForm = ({ onLogin }) => {
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    autoComplete="current-password"
+                    disabled={loading}
                   />
                   <button
                     type="button"
                     className={styles.passwordToggle}
                     onClick={() => setShowPassword((s) => !s)}
                     aria-label="Toggle password visibility"
+                    disabled={loading}
                   >
                     {showPassword ? <IconEyeOff size={16} /> : <IconEye size={16} />}
                   </button>
@@ -132,13 +200,21 @@ const LoginForm = ({ onLogin }) => {
                   <span className={styles.checkboxBox}><IconCheck size={12} /></span>
                   Remember me
                 </label>
-                <span className={styles.forgotLink}>Forgot password?</span>
               </div>
 
-              <button type="submit" className={styles.loginBtn}>
-                Sign In as {selectedRole.label}
+              <button
+                type="submit"
+                className={styles.loginBtn}
+                disabled={loading}
+              >
+                {loading ? 'Signing in…' : `Sign In as ${selectedRole.label}`}
               </button>
             </form>
+
+            {/* Dev hint for the seeded admin account */}
+            <p style={{ marginTop: 16, fontSize: 12, color: '#94a3b8', textAlign: 'center' }}>
+              Default admin: <code>admin@example.test</code> / <code>ChangeThisPassword123!</code>
+            </p>
           </>
         )}
       </div>
