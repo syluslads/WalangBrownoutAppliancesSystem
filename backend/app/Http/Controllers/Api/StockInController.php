@@ -67,7 +67,16 @@ class StockInController extends Controller
         return response()->json([
             'message' => 'Stock-in recorded successfully.',
             'data'    => [
-                'batch'       => $result['batch'],
+                'batch'       => [
+                    'id'                 => $result['batch']->id,
+                    'batch_number'       => $result['batch']->batch_number,
+                    'received_date'      => $result['batch']->received_date?->format('Y-m-d'),
+                    'expiration_date'    => $result['batch']->expiration_date?->format('Y-m-d'),
+                    'quantity_received'  => $result['batch']->quantity_received,
+                    'quantity_available' => $result['batch']->quantity_available,
+                    'location'           => $result['batch']->location,
+                    'unit_cost'          => $result['batch']->unit_cost,
+                ],
                 'transaction' => $result['transaction'],
                 'product'     => [
                     'id'            => $product->id,
@@ -90,7 +99,19 @@ class StockInController extends Controller
         $batches = $product->batches()
             ->orderByDesc('received_date')
             ->orderByDesc('id')
-            ->get();
+            ->get()
+            ->map(function ($batch) {
+                return [
+                    'id'                 => $batch->id,
+                    'batch_number'       => $batch->batch_number,
+                    'received_date'      => $batch->received_date?->format('Y-m-d'),
+                    'expiration_date'    => $batch->expiration_date?->format('Y-m-d'),
+                    'quantity_received'  => $batch->quantity_received,
+                    'quantity_available' => $batch->quantity_available,
+                    'location'           => $batch->location,
+                    'unit_cost'          => $batch->unit_cost,
+                ];
+            });
 
         return response()->json([
             'data' => [
