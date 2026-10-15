@@ -1440,6 +1440,9 @@ select:focus,
 
 .modal-checkbox-row {
   margin: 16px 0 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .checkbox-toggle-card {

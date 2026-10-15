@@ -13,18 +13,20 @@ const ProductModal = ({ product, categories, suppliers, onClose, onSaved }) => {
   const isEdit = Boolean(product);
   const [customUnit, setCustomUnit] = useState(false);
   const [form, setForm] = useState({
-    sku:           product?.sku           ?? '',
-    name:          product?.name          ?? '',
-    description:   product?.description   ?? '',
-    category_id:   product?.category?.id  ?? (categories[0]?.id ? String(categories[0].id) : ''),
-    supplier_id:   product?.supplier?.id  ?? (suppliers[0]?.id ? String(suppliers[0].id) : ''),
-    unit:          product?.unit          ?? 'unit',
-    unit_price:    product?.unit_price    ?? '',
-    reorder_point: product?.reorder_point ?? '',
-    safety_stock:  product?.safety_stock  ?? '',
-    is_perishable: product?.is_perishable ?? false,
-    abc_class:     product?.abc_class     ?? 'C',
-    is_active:     product?.is_active     ?? true,
+    sku:             product?.sku             ?? '',
+    name:            product?.name            ?? '',
+    description:     product?.description     ?? '',
+    category_id:     product?.category?.id    ?? (categories[0]?.id ? String(categories[0].id) : ''),
+    supplier_id:     product?.supplier?.id    ?? (suppliers[0]?.id ? String(suppliers[0].id) : ''),
+    unit:            product?.unit            ?? 'unit',
+    unit_price:      product?.unit_price      ?? '',
+    reorder_point:   product?.reorder_point   ?? '',
+    safety_stock:    product?.safety_stock    ?? '',
+    max_stock_level: product?.max_stock_level ?? '',
+    is_perishable:   product?.is_perishable   ?? false,
+    is_seasonal:     product?.is_seasonal     ?? false,
+    abc_class:       product?.abc_class       ?? 'C',
+    is_active:       product?.is_active       ?? true,
   });
   const [saving, setSaving] = useState(false);
   const [error, setError]   = useState('');
@@ -76,11 +78,12 @@ const ProductModal = ({ product, categories, suppliers, onClose, onSaved }) => {
     try {
       const payload = {
         ...form,
-        category_id:   Number(form.category_id),
-        supplier_id:   Number(form.supplier_id),
-        unit_price:    form.unit_price    !== '' ? Number(form.unit_price)    : null,
-        reorder_point: form.reorder_point !== '' ? Number(form.reorder_point) : null,
-        safety_stock:  form.safety_stock  !== '' ? Number(form.safety_stock)  : null,
+        category_id:     Number(form.category_id),
+        supplier_id:     Number(form.supplier_id),
+        unit_price:      form.unit_price      !== '' ? Number(form.unit_price)      : null,
+        reorder_point:   form.reorder_point   !== '' ? Number(form.reorder_point)   : null,
+        safety_stock:    form.safety_stock    !== '' ? Number(form.safety_stock)    : null,
+        max_stock_level: form.max_stock_level !== '' ? Number(form.max_stock_level) : null,
       };
       if (isEdit) {
         const res = await updateProduct(product.id, payload);
@@ -211,6 +214,13 @@ const ProductModal = ({ product, categories, suppliers, onClose, onSaved }) => {
               <input type="number" min="0" placeholder="0" value={form.safety_stock} onChange={e => set('safety_stock', e.target.value)} disabled={saving} />
             </div>
             <div className="form-group">
+              <label>Max Stock Level</label>
+              <input type="number" min="0" placeholder="0" value={form.max_stock_level} onChange={e => set('max_stock_level', e.target.value)} disabled={saving} />
+              <small style={{ fontSize: 11, color: '#94a3b8', marginTop: 4, display: 'block' }}>
+                Overstock alert threshold (typically 10× reorder point)
+              </small>
+            </div>
+            <div className="form-group">
               <label>ABC Classification</label>
               <select value={form.abc_class} onChange={e => set('abc_class', e.target.value)} disabled={saving}>
                 <option value="A">Class A (High Value &amp; Sales)</option>
@@ -238,6 +248,30 @@ const ProductModal = ({ product, categories, suppliers, onClose, onSaved }) => {
               <div className="checkbox-toggle-text">
                 <span className="checkbox-toggle-label">Perishable Inventory</span>
                 <span className="checkbox-toggle-desc">Enforce FIFO picking &amp; track expiration dates</span>
+              </div>
+            </label>
+            <label className="checkbox-toggle-card">
+              <input type="checkbox" checked={form.is_seasonal} onChange={e => set('is_seasonal', e.target.checked)} disabled={saving} />
+              <div className="checkbox-toggle-text">
+                <span className="checkbox-toggle-label">Seasonal Item</span>
+                <span className="checkbox-toggle-desc">Product has seasonal demand patterns</span>
+              </div>
+            </label>
+            <label className="checkbox-toggle-card">
+              <input 
+                type="checkbox" 
+                checked={!form.is_perishable && !form.is_seasonal} 
+                onChange={e => {
+                  if (e.target.checked) {
+                    set('is_perishable', false);
+                    set('is_seasonal', false);
+                  }
+                }} 
+                disabled={saving} 
+              />
+              <div className="checkbox-toggle-text">
+                <span className="checkbox-toggle-label">Standard Item</span>
+                <span className="checkbox-toggle-desc">Regular inventory (not perishable or seasonal)</span>
               </div>
             </label>
           </div>
@@ -431,6 +465,7 @@ const Products = () => {
             <th>ABC</th>
             <th>Current Stock</th>
             <th>Reorder Point</th>
+            <th>Max Stock</th>
             <th>Safety Stock</th>
             <th>Status</th>
             <th>Actions</th>
@@ -438,46 +473,72 @@ const Products = () => {
         </thead>
         <tbody>
           {loading ? (
-            <tr><td colSpan={10} style={{ textAlign: 'center', color: '#94a3b8', padding: '24px 0' }}>Loading products…</td></tr>
+            <tr><td colSpan={11} style={{ textAlign: 'center', color: '#94a3b8', padding: '24px 0' }}>Loading products…</td></tr>
           ) : products.length === 0 ? (
-            <tr><td colSpan={10} style={{ textAlign: 'center', color: '#94a3b8', padding: '24px 0' }}>No products found.</td></tr>
-          ) : products.map(prod => (
-            <tr key={prod.id}>
-              <td><strong>{prod.sku}</strong></td>
-              <td>
-                {prod.name}
-                {prod.is_perishable && <span className="mini-tag">FIFO</span>}
-              </td>
-              <td>{prod.category?.name || '—'}</td>
-              <td>{prod.supplier?.name || '—'}</td>
-              <td>
-                {prod.abc_class
-                  ? <span className={`status-pill ${classPill[prod.abc_class] || 'pill-slate'}`}>Class {prod.abc_class}</span>
-                  : '—'
-                }
-              </td>
-              <td className={prod.current_stock <= prod.reorder_point ? 'stock-low' : ''}>
-                {prod.current_stock ?? 0} units
-              </td>
-              <td>{prod.reorder_point ?? '—'}</td>
-              <td>{prod.safety_stock ?? '—'}</td>
-              <td>
-                <span className={`status-pill ${prod.is_active ? 'pill-green' : 'pill-gray'}`}>
-                  {prod.is_active ? 'Active' : 'Inactive'}
-                </span>
-              </td>
-              <td>
-                {canManage ? (
-                  <>
-                    <button className="btn-micro" onClick={() => openEdit(prod)} title="Edit"><IconEdit size={13} /></button>
-                    <button className="btn-micro danger" onClick={() => handleDelete(prod)} title="Delete"><IconTrash size={13} /></button>
-                  </>
-                ) : (
-                  <button className="btn-micro" disabled title="View-only for your role"><IconLock size={13} /></button>
-                )}
-              </td>
-            </tr>
-          ))}
+            <tr><td colSpan={11} style={{ textAlign: 'center', color: '#94a3b8', padding: '24px 0' }}>No products found.</td></tr>
+          ) : products.map(prod => {
+            const currentStock = prod.current_stock ?? 0;
+            const maxStock = prod.max_stock_level;
+            const isOverstocked = maxStock && currentStock > maxStock;
+            const overstockAmount = isOverstocked ? currentStock - maxStock : 0;
+            
+            return (
+              <tr key={prod.id}>
+                <td><strong>{prod.sku}</strong></td>
+                <td>
+                  {prod.name}
+                  {prod.is_perishable && <span className="mini-tag">FIFO</span>}
+                  {prod.is_seasonal && <span className="mini-tag" style={{ backgroundColor: '#fbbf24', color: '#92400e' }}>SEASONAL</span>}
+                  {!prod.is_perishable && !prod.is_seasonal && <span className="mini-tag" style={{ backgroundColor: '#e2e8f0', color: '#475569' }}>STANDARD</span>}
+                </td>
+                <td>{prod.category?.name || '—'}</td>
+                <td>{prod.supplier?.name || '—'}</td>
+                <td>
+                  {prod.abc_class
+                    ? <span className={`status-pill ${classPill[prod.abc_class] || 'pill-slate'}`}>Class {prod.abc_class}</span>
+                    : '—'
+                  }
+                </td>
+                <td className={prod.current_stock <= prod.reorder_point ? 'stock-low' : ''}>
+                  {currentStock} units
+                  {isOverstocked && (
+                    <span style={{ 
+                      display: 'block', 
+                      fontSize: 11, 
+                      color: '#ea580c', 
+                      fontWeight: 600,
+                      marginTop: 2 
+                    }}>
+                      +{overstockAmount} over
+                    </span>
+                  )}
+                </td>
+                <td>{prod.reorder_point ?? '—'}</td>
+                <td style={{ 
+                  color: isOverstocked ? '#ea580c' : undefined,
+                  fontWeight: isOverstocked ? 600 : undefined
+                }}>
+                  {maxStock ?? '—'}
+                </td>
+                <td>{prod.safety_stock ?? '—'}</td>
+                <td>
+                  <span className={`status-pill ${prod.is_active ? 'pill-green' : 'pill-gray'}`}>
+                    {prod.is_active ? 'Active' : 'Inactive'}
+                  </span>
+                </td>
+                <td>
+                  {canManage ? (
+                    <>
+                      <button className="btn-micro" onClick={() => openEdit(prod)} title="Edit"><IconEdit size={13} /></button>
+                      <button className="btn-micro danger" onClick={() => handleDelete(prod)} title="Delete"><IconTrash size={13} /></button>
+                    </>
+                  ) : (
+                    <button className="btn-micro" disabled title="View-only for your role"><IconLock size={13} /></button>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
 

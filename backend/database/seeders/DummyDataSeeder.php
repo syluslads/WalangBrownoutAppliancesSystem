@@ -65,8 +65,8 @@ class DummyDataSeeder extends Seeder
             [
                 'sku' => 'SKU-AC-1001', 'name' => 'Portable AC Unit 1.0HP',
                 'category' => 'Air Conditioners', 'supplier' => 'CoolBreeze Appliances Corp',
-                'unit_price' => 18500, 'reorder_point' => 5, 'safety_stock' => 2,
-                'abc_class' => 'A', 'is_perishable' => false, 'qty' => 50, 'expiry' => null,
+                'unit_price' => 18500, 'reorder_point' => 5, 'max_stock_level' => 100, 'safety_stock' => 2,
+                'is_seasonal' => true, 'abc_class' => 'A', 'is_perishable' => false, 'qty' => 50, 'expiry' => null,
             ],
             [
                 'sku' => 'SKU-AC-1002', 'name' => 'Window-Type AC 1.5HP',
@@ -128,16 +128,18 @@ class DummyDataSeeder extends Seeder
             $product = Product::updateOrCreate(
                 ['sku' => $p['sku']],
                 [
-                    'name'          => $p['name'],
-                    'category_id'   => $categoryMap[$p['category']],
-                    'supplier_id'   => $supplierMap[$p['supplier']],
-                    'unit'          => 'unit',
-                    'unit_price'    => $p['unit_price'],
-                    'reorder_point' => $p['reorder_point'],
-                    'safety_stock'  => $p['safety_stock'],
-                    'abc_class'     => $p['abc_class'],
-                    'is_perishable' => $p['is_perishable'],
-                    'is_active'     => true,
+                    'name'           => $p['name'],
+                    'category_id'    => $categoryMap[$p['category']],
+                    'supplier_id'    => $supplierMap[$p['supplier']],
+                    'unit'           => 'unit',
+                    'unit_price'     => $p['unit_price'],
+                    'reorder_point'  => $p['reorder_point'],
+                    'max_stock_level'=> $p['max_stock_level'] ?? ($p['reorder_point'] * 10),
+                    'safety_stock'   => $p['safety_stock'],
+                    'abc_class'      => $p['abc_class'],
+                    'is_perishable'  => $p['is_perishable'],
+                    'is_seasonal'    => $p['is_seasonal'] ?? false,
+                    'is_active'      => true,
                 ]
             );
 

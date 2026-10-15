@@ -20,8 +20,10 @@ class Product extends Model
         'unit',
         'unit_price',
         'is_perishable',
+        'is_seasonal',
         'abc_class',
         'reorder_point',
+        'max_stock_level',
         'safety_stock',
         'is_active',
     ];
@@ -29,11 +31,13 @@ class Product extends Model
     protected function casts(): array
     {
         return [
-            'unit_price'    => 'decimal:2',
-            'is_perishable' => 'boolean',
-            'is_active'     => 'boolean',
-            'reorder_point' => 'integer',
-            'safety_stock'  => 'integer',
+            'unit_price'      => 'decimal:2',
+            'is_perishable'   => 'boolean',
+            'is_seasonal'     => 'boolean',
+            'is_active'       => 'boolean',
+            'reorder_point'   => 'integer',
+            'max_stock_level' => 'integer',
+            'safety_stock'    => 'integer',
         ];
     }
 
